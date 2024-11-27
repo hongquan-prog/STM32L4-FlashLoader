@@ -55,10 +55,10 @@ int PrgCode SEGGER_FL_Program(unsigned long DestAddr, unsigned long NumBytes, un
 
 int PrgCode SEGGER_FL_Erase(unsigned long SectorAddr, unsigned long SectorIndex, unsigned long NumSectors)
 {
-    uint32_t start = (SectorAddr - MEMORY_BASE_ADDR) / MEMORY_SECTOR_SIZE;
+    unsigned long start = (SectorAddr - MEMORY_BASE_ADDR) / MEMORY_SECTOR_SIZE;
 
     w25qxx_exit_memory_mapped_mode();
-    for (uint32_t i = start + SectorIndex; i < (SectorIndex + NumSectors); i++)
+    for (unsigned long i = start + SectorIndex; i < (SectorIndex + NumSectors); i++)
     {
         if (HAL_OK != w25qxx_erase_sector(i))
         {
@@ -77,4 +77,54 @@ int PrgCode SEGGER_FL_EraseChip(void)
 int PrgCode SEGGER_FL_Read(unsigned long Addr, unsigned long NumBytes, unsigned char *pDestBuff)
 {
     return (Read(Addr, NumBytes, pDestBuff) == 1) ? (0) : (-1);
+}
+
+unsigned long PrgCode SEGGER_FL_Verify(unsigned long Addr, unsigned long NumBytes, unsigned char *pData)
+{
+    w25qxx_enter_memory_mapped_mode();
+    for (unsigned int i = 0; i < NumBytes; i++)
+    {
+        if (pData[i] != *(unsigned char *)(Addr + i))
+        {
+            return Addr + i;
+        }
+    }
+
+    return Addr + NumBytes;
+}
+
+int PrgCode SEGGER_FL_CheckBlank(unsigned long Addr, unsigned long NumBytes, unsigned char BlankValue)
+{
+    w25qxx_enter_memory_mapped_mode();
+    for (unsigned int i = 0; i < NumBytes; i++)
+    {
+        if (BlankValue != *(unsigned char *)(Addr + i))
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+unsigned long PrgCode SEGGER_FL_CalcCRC(unsigned long crc, unsigned long Addr, unsigned long NumBytes, unsigned long Polynom)
+{
+    unsigned char data = 0;
+    unsigned char xor = 0;
+
+    w25qxx_enter_memory_mapped_mode();
+    for (unsigned int i = 0; i < NumBytes; i++)
+    {
+        data = *(unsigned char *)(Addr + i);
+        for (int j = 0; j < 8; j++)
+        {
+            xor = crc ^ data;
+            crc >>= 1;
+            if (xor&1)
+                crc ^= Polynom;
+            data >>= 1;
+        }
+    }
+
+    return crc;
 }
