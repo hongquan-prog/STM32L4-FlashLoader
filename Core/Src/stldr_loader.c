@@ -87,14 +87,10 @@ int Read(uint32_t Address, uint32_t Size, uint8_t *Buffer)
  */
 int SectorErase(uint32_t EraseStartAddress, uint32_t EraseEndAddress)
 {
-    uint32_t sector = 0;
-
     w25qxx_exit_memory_mapped_mode();
-    EraseStartAddress = EraseStartAddress - EraseStartAddress % MEMORY_SECTOR_SIZE;
     while (EraseEndAddress >= EraseStartAddress)
     {
-        sector = (EraseStartAddress - MEMORY_BASE_ADDR) / MEMORY_SECTOR_SIZE;
-        if (w25qxx_erase_sector(sector) != HAL_OK)
+        if (w25qxx_erase_sector(EraseStartAddress - MEMORY_BASE_ADDR) != HAL_OK)
             return LOADER_FAIL;
         EraseStartAddress += MEMORY_SECTOR_SIZE;
     }

@@ -60,7 +60,7 @@ int PrgCode SEGGER_FL_Erase(unsigned long SectorAddr, unsigned long SectorIndex,
     w25qxx_exit_memory_mapped_mode();
     for (unsigned long i = start + SectorIndex; i < (SectorIndex + NumSectors); i++)
     {
-        if (HAL_OK != w25qxx_erase_sector(i))
+        if (HAL_OK != w25qxx_erase_sector(i * MEMORY_SECTOR_SIZE))
         {
             return -1;
         }
